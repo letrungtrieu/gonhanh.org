@@ -24,11 +24,17 @@ class MenuBarController {
         setupMenu()
         updateStatusButton()
 
-        if UserDefaults.standard.bool(forKey: SettingsKey.hasCompletedOnboarding) {
+        let hasCompleted = UserDefaults.standard.bool(forKey: SettingsKey.hasCompletedOnboarding)
+        let hasPermission = AXIsProcessTrusted()
+
+        if hasCompleted && hasPermission {
             loadSettings()
             startEngine()
         } else {
-            showOnboarding()
+            // Delay để app khởi động xong, tránh system dialog che onboarding
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.showOnboarding()
+            }
         }
     }
 
@@ -180,10 +186,11 @@ class MenuBarController {
             window.setContentSize(controller.view.fittingSize)
             window.center()
             window.isReleasedWhenClosed = false
+            window.level = .floating  // Hiện trên các window khác
             onboardingWindow = window
         }
-        onboardingWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        onboardingWindow?.makeKeyAndOrderFront(nil)
     }
 
     @objc private func showAbout() {
