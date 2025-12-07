@@ -211,7 +211,7 @@ struct PermissionStep: View {
             if status == .notGranted || status == .needsRestart {
                 VStack(alignment: .leading, spacing: 12) {
                     StepRow(number: 1, text: "Nhấn \"Mở Cài đặt\" bên dưới", isCompleted: hasRequestedPermission)
-                    StepRow(number: 2, text: "Bật GoNhanh trong danh sách", isCompleted: false)
+                    StepRow(number: 2, text: "Bật GoNhanh trong Accessibility", isCompleted: false)
                     StepRow(number: 3, text: "Quay lại và nhấn \"Khởi động lại\"", isCompleted: false)
                 }
                 .padding(.vertical, 10)
@@ -282,7 +282,7 @@ struct PermissionStep: View {
         case .needsRestart:
             return "Cần khởi động lại"
         default:
-            return "Cấp quyền Input Monitoring"
+            return "Cấp quyền Accessibility"
         }
     }
 
@@ -293,7 +293,7 @@ struct PermissionStep: View {
         case .needsRestart:
             return "Bạn đã cấp quyền! Khởi động lại app để áp dụng."
         default:
-            return "GoNhanh cần quyền Input Monitoring để nhận phím bạn gõ và chuyển đổi thành tiếng Việt."
+            return "GoNhanh cần quyền Accessibility để nhận phím bạn gõ và chuyển đổi thành tiếng Việt."
         }
     }
 
