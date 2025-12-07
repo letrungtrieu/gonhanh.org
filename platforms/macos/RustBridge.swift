@@ -315,47 +315,28 @@ private func keyboardCallback(
 
 // MARK: - App Detection
 
-/// Check if current frontmost app is a terminal/CLI app
-private func isTerminalApp() -> Bool {
+/// Check if current app has autocomplete issues that need Shift+Left workaround
+private func needsSelectionWorkaround() -> Bool {
     guard let frontApp = NSWorkspace.shared.frontmostApplication else {
         return false
     }
 
     let bundleId = frontApp.bundleIdentifier ?? ""
-    let appName = frontApp.localizedName ?? ""
 
-    // List of known terminal apps
-    let terminalBundleIds = [
-        "com.apple.Terminal",
-        "com.googlecode.iterm2",
-        "io.alacritty",
-        "com.github.wez.wezterm",
-        "co.zeit.hyper",
-        "com.qvacua.VimR",
-        "org.vim.MacVim",
-        "com.microsoft.VSCode",      // VS Code integrated terminal
-        "com.jetbrains.",            // JetBrains IDEs
+    // Apps with autocomplete that cause "dính chữ" issue
+    let autocompleteApps = [
+        "com.google.Chrome",
+        "com.microsoft.edgemac",
+        "com.microsoft.Excel",
+        "com.microsoft.Word",
+        "com.microsoft.Powerpoint",
+        "com.apple.Safari",
+        "org.mozilla.firefox",
+        "com.google.android.studio",
     ]
 
-    let terminalAppNames = [
-        "Terminal",
-        "iTerm",
-        "Alacritty",
-        "WezTerm",
-        "Hyper",
-        "kitty",
-    ]
-
-    // Check bundle ID
-    for id in terminalBundleIds {
-        if bundleId.contains(id) {
-            return true
-        }
-    }
-
-    // Check app name
-    for name in terminalAppNames {
-        if appName.contains(name) {
+    for id in autocompleteApps {
+        if bundleId.hasPrefix(id) {
             return true
         }
     }
@@ -366,15 +347,15 @@ private func isTerminalApp() -> Bool {
 // MARK: - Send Keys
 
 /// Smart text replacement - uses different methods based on app type
-/// - Terminal/CLI: Use backspace (selection doesn't work well)
-/// - Browser/Office: Use Shift+Left selection (fixes autocomplete issues)
+/// - Default: Use backspace (works for most apps including Terminal)
+/// - Autocomplete apps (Chrome/Excel): Use Shift+Left selection (fixes "dính chữ")
 private func sendTextReplacement(backspaceCount: Int, chars: [Character], proxy: CGEventTapProxy) {
-    if isTerminalApp() {
-        // Terminal mode: use backspace
-        sendTextReplacementWithBackspace(backspaceCount: backspaceCount, chars: chars, proxy: proxy)
-    } else {
-        // GUI app mode: use selection for atomic replacement
+    if needsSelectionWorkaround() {
+        // Chrome/Excel: use selection for atomic replacement
         sendTextReplacementWithSelection(backspaceCount: backspaceCount, chars: chars, proxy: proxy)
+    } else {
+        // Default: use backspace (works for Terminal, most apps)
+        sendTextReplacementWithBackspace(backspaceCount: backspaceCount, chars: chars, proxy: proxy)
     }
 }
 
