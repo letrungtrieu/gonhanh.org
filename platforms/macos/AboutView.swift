@@ -3,40 +3,42 @@ import SwiftUI
 struct AboutView: View {
     var body: some View {
         VStack(spacing: 0) {
-            content.frame(height: 340)
+            content
             Divider()
             footer
         }
-        .frame(width: 480)
+        .frame(width: 320)
     }
 
     private var content: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Spacer()
+
+            // App info
             Image(nsImage: AppMetadata.logo)
                 .resizable()
-                .frame(width: 80, height: 80)
+                .frame(width: 72, height: 72)
             Text(AppMetadata.name)
-                .font(.system(size: 22, weight: .bold))
-            Text(AppMetadata.tagline)
-                .foregroundStyle(.secondary)
+                .font(.system(size: 20, weight: .bold))
             Text("Version \(AppMetadata.version)")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
+
             Spacer()
 
             // Author
-            VStack(spacing: 6) {
-                Text("Developed by").font(.caption).foregroundStyle(.tertiary)
-                Text(AppMetadata.author).font(.callout)
-                Text(AppMetadata.authorEmail).font(.caption).foregroundStyle(.secondary)
-                Link(destination: URL(string: AppMetadata.authorLinkedin)!) {
-                    Text("LinkedIn").font(.caption)
-                }
+            VStack(spacing: 4) {
+                Text(AppMetadata.author).font(.callout).fontWeight(.medium)
+                Link(AppMetadata.authorEmail, destination: URL(string: "mailto:\(AppMetadata.authorEmail)")!)
+                    .font(.caption).foregroundStyle(.secondary)
+                Link("LinkedIn", destination: URL(string: AppMetadata.authorLinkedin)!)
+                    .font(.caption)
             }
 
+            Spacer()
+
             // Links
-            HStack(spacing: 20) {
+            HStack(spacing: 24) {
                 Link(destination: URL(string: AppMetadata.website)!) {
                     Label("Website", systemImage: "globe")
                 }
@@ -45,20 +47,19 @@ struct AboutView: View {
                 }
             }
             .font(.callout)
+
             Spacer()
         }
-        .padding(.horizontal, 40)
+        .padding(.horizontal, 32)
+        .padding(.vertical, 20)
     }
 
     private var footer: some View {
-        HStack {
-            Text(AppMetadata.copyright)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-            Spacer()
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
+        Text(AppMetadata.copyright)
+            .font(.caption2)
+            .foregroundStyle(.tertiary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
     }
 }
 
