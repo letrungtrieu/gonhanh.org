@@ -26,13 +26,15 @@ class MenuBarController {
 
         let hasCompleted = UserDefaults.standard.bool(forKey: SettingsKey.hasCompletedOnboarding)
         let hasPermission = AXIsProcessTrusted()
+        let isPostRestart = UserDefaults.standard.bool(forKey: "gonhanh.didRestart")
 
         if hasCompleted && hasPermission {
             loadSettings()
             startEngine()
         } else {
-            // Delay để app khởi động xong, tránh system dialog che onboarding
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            // Hiện onboarding sau khi app đã khởi động xong
+            let delay = isPostRestart ? 0.1 : 0.5  // Post-restart cần ít delay hơn
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                 self?.showOnboarding()
             }
         }
