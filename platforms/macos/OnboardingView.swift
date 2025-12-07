@@ -209,8 +209,8 @@ struct PermissionStep: View {
             if status == .notGranted || status == .needsRestart {
                 VStack(alignment: .leading, spacing: 12) {
                     StepRow(number: 1, text: "Nhấn \"Mở Cài đặt\" bên dưới", isCompleted: hasRequestedPermission)
-                    StepRow(number: 2, text: "Bật GoNhanh trong Accessibility", isCompleted: false)
-                    StepRow(number: 3, text: "Quay lại và nhấn \"Khởi động lại\"", isCompleted: false)
+                    StepRow(number: 2, text: "Bật GoNhanh trong Accessibility", isCompleted: status == .needsRestart)
+                    StepRow(number: 3, text: "Nhấn \"Khởi động lại\" bên dưới", isCompleted: false)
                 }
                 .padding(.vertical, 10)
             }
@@ -229,22 +229,19 @@ struct PermissionStep: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
-                } else if status == .needsRestart || showRestartPrompt {
-                    Button("Mở Cài đặt") {
-                        openSystemSettings()
-                    }
-                    .controlSize(.large)
-
+                } else if status == .needsRestart {
+                    // Permission granted - show only restart button
                     Button(action: onRestart) {
                         HStack {
                             Image(systemName: "arrow.clockwise")
                             Text("Khởi động lại")
                         }
-                        .frame(width: 160)
+                        .frame(width: 180)
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                 } else {
+                    // Not granted yet
                     Button(action: requestPermission) {
                         HStack {
                             Image(systemName: "gear")
