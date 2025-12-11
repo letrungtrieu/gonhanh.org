@@ -85,17 +85,13 @@ class UpdateManager: NSObject, ObservableObject {
             return "Không thể mở file cài đặt. Vui lòng thử tải lại."
         }
 
-        defer {
-            // Always unmount
-            shell("hdiutil detach '\(mountPoint)' -quiet -force")
-        }
-
         // 2. Find .app in mounted volume
         let appName = "GoNhanh.app"
         let sourceApp = "\(mountPoint)/\(appName)"
         let destApp = "/Applications/\(appName)"
 
         guard FileManager.default.fileExists(atPath: sourceApp) else {
+            shell("hdiutil detach '\(mountPoint)' -quiet -force")
             return "File cài đặt bị lỗi. Vui lòng thử tải lại."
         }
 
@@ -105,17 +101,25 @@ class UpdateManager: NSObject, ObservableObject {
             """)
 
         if copyResult.status != 0 {
+            shell("hdiutil detach '\(mountPoint)' -quiet -force")
             return "Không có quyền cài vào Applications. Hãy di chuyển app vào thư mục khác."
         }
 
-        // 4. Restart app
-        DispatchQueue.main.async {
-            let newAppURL = URL(fileURLWithPath: destApp)
-            NSWorkspace.shared.openApplication(at: newAppURL, configuration: .init())
+        // 4. Unmount DMG before launching new app (defer won't work correctly here)
+        shell("hdiutil detach '\(mountPoint)' -quiet -force")
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                NSApp.terminate(nil)
-            }
+        // 5. Launch new app and terminate current one
+        // Use open command which is more reliable than NSWorkspace for self-update
+        let launchResult = shell("open '\(destApp)'")
+        if launchResult.status != 0 {
+            return "Không thể khởi động lại ứng dụng. Vui lòng mở thủ công từ Applications."
+        }
+
+        // Give new app time to start before terminating
+        Thread.sleep(forTimeInterval: 1.0)
+
+        DispatchQueue.main.async {
+            NSApp.terminate(nil)
         }
 
         return nil
