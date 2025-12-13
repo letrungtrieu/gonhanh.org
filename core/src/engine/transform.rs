@@ -94,7 +94,7 @@ fn find_tone_targets(buffer_keys: &[u16], key: u16, tone_value: u8, method: u8) 
     let vowel_positions: Vec<usize> = buffer_keys
         .iter()
         .enumerate()
-        .filter(|(_, &k)| keys::is_vowel(k))
+        .filter(|(_, k)| keys::is_vowel(**k))
         .map(|(i, _)| i)
         .collect();
 

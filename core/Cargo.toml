@@ -1,7 +1,7 @@
 [package]
 name = "gonhanh-core"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 authors = ["Kha Phan <nhatkha1407@gmail.com>"]
 license = "GPL-3.0-or-later"
 description = "Gõ Nhanh - Vietnamese input method core engine"
@@ -15,7 +15,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]  # Add rlib for tests
 # Minimal dependencies for core engine
 
 [dev-dependencies]
-rstest = "0.18"
+rstest = "0.26.1"
 
 [profile.release]
 opt-level = "z"          # Optimize for size

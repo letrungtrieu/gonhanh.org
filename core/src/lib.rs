@@ -43,7 +43,7 @@ static ENGINE: Mutex<Option<Engine>> = Mutex::new(None);
 ///
 /// # Panics
 /// Panics if mutex is poisoned (only if previous call panicked).
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn ime_init() {
     let mut guard = ENGINE.lock().unwrap();
     *guard = Some(Engine::new());
@@ -69,7 +69,7 @@ pub extern "C" fn ime_init() {
 /// # Note
 /// For VNI mode with Shift+number keys (to type @, #, $ etc.),
 /// use `ime_key_ext` with the shift parameter.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn ime_key(key: u16, caps: bool, ctrl: bool) -> *mut Result {
     let mut guard = ENGINE.lock().unwrap();
     if let Some(ref mut e) = *guard {
@@ -98,7 +98,7 @@ pub extern "C" fn ime_key(key: u16, caps: bool, ctrl: bool) -> *mut Result {
 /// - Shift+2 → @ (not huyền mark)
 /// - Shift+3 → # (not hỏi mark)
 /// - etc.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn ime_key_ext(key: u16, caps: bool, ctrl: bool, shift: bool) -> *mut Result {
     let mut guard = ENGINE.lock().unwrap();
     if let Some(ref mut e) = *guard {
@@ -115,7 +115,7 @@ pub extern "C" fn ime_key_ext(key: u16, caps: bool, ctrl: bool, shift: bool) -> 
 /// * `method` - 0 for Telex, 1 for VNI
 ///
 /// No-op if engine not initialized.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn ime_method(method: u8) {
     let mut guard = ENGINE.lock().unwrap();
     if let Some(ref mut e) = *guard {
@@ -127,7 +127,7 @@ pub extern "C" fn ime_method(method: u8) {
 ///
 /// When disabled, `ime_key` returns action=0 (pass through).
 /// No-op if engine not initialized.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn ime_enabled(enabled: bool) {
     let mut guard = ENGINE.lock().unwrap();
     if let Some(ref mut e) = *guard {
@@ -139,7 +139,7 @@ pub extern "C" fn ime_enabled(enabled: bool) {
 ///
 /// Call on word boundaries (space, punctuation, mouse click, focus change).
 /// No-op if engine not initialized.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn ime_clear() {
     let mut guard = ENGINE.lock().unwrap();
     if let Some(ref mut e) = *guard {
@@ -153,10 +153,10 @@ pub extern "C" fn ime_clear() {
 /// * `r` must be a pointer returned by `ime_key`, or null
 /// * Must be called exactly once per non-null `ime_key` return
 /// * Do not use `r` after calling this function
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn ime_free(r: *mut Result) {
     if !r.is_null() {
-        drop(Box::from_raw(r));
+        drop(unsafe {Box::from_raw(r)});
     }
 }
 
