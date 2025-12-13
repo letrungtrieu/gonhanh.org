@@ -1,0 +1,30 @@
+[package]
+name = "ibus-gonhanh"
+version = "1.0.0"
+edition = "2024"
+authors = ["Kha Phan <nhatkha1407@gmail.com>", "Trieu Le <ltrungtrieu@gmail.com>"]
+description = "IBus engine for Gõ Nhanh Vietnamese Input Method"
+license = "GPL-3.0-or-later"
+
+[[bin]]
+name = "ibus-engine-gonhanh"
+path = "src/main.rs"
+
+[dependencies]
+# D-Bus implementation for IBus engine
+zbus = "5.12.0"
+tokio = { version = "1.48", features = ["full"] }
+async-trait = "0.1"
+
+# Logging
+env_logger = "0.11"
+log = "0.4"
+
+# Core engine
+gonhanh-core = { path = "../../../core" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
