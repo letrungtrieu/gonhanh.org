@@ -6,10 +6,11 @@ mod engine;
 mod ffi;
 mod keycode;
 
+use std::{error::Error, future::pending};
 use zbus::connection;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Box<dyn Error>> {
     // Initialize logging
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     log::info!("Starting Gõ Nhanh IBus engine...");
@@ -18,10 +19,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ffi::initialize();
     log::info!("Gonhanh core initialized");
 
+    // init gonhanh engine
+    let gonhanh_engine = engine::GoNhanhEngine::new();
+
     // Create D-Bus connection
     let _connection = connection::Builder::session()?
         .name("org.freedesktop.IBus.GoNhanh")?
-        .serve_at("/org/freedesktop/IBus/Engine/GoNhanh", engine::GoNhanhEngine::new())?
+        .serve_at("/org/freedesktop/IBus/Engine/GoNhanh", gonhanh_engine)?
+        .internal_executor(false)  // Use tokio runtime instead
+        .max_queued(64)            // Configure queue capacity for IME workload
         .build()
         .await?;
 
@@ -29,7 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     log::info!("Engine ready, waiting for connections...");
 
     // Keep the service running
-    std::future::pending::<()>().await;
+    pending::<()>().await;
 
     Ok(())
 }

@@ -3,15 +3,12 @@
 //! Implements the org.freedesktop.IBus.Engine interface via zbus
 
 use crate::{ffi, keycode};
-use std::sync::Mutex;
-use zbus::{interface, Connection, object_server::SignalEmitter};
+use zbus::{interface, object_server::SignalEmitter};
 
 /// Gõ Nhanh IBus Engine
 ///
 /// Implements the IBus Engine D-Bus interface
-pub struct GoNhanhEngine {
-    connection: Mutex<Option<Connection>>,
-}
+pub struct GoNhanhEngine;
 
 impl GoNhanhEngine {
     pub fn new() -> Self {
@@ -21,14 +18,7 @@ impl GoNhanhEngine {
         ffi::set_method(0); // 0 = Telex
         ffi::set_enabled(true);
 
-        Self {
-            connection: Mutex::new(None),
-        }
-    }
-
-    /// Set the D-Bus connection (called after interface is registered)
-    pub fn set_connection(&self, conn: Connection) {
-        *self.connection.lock().unwrap() = Some(conn);
+        Self
     }
 
     /// Send text to the application via D-Bus signals
@@ -52,14 +42,17 @@ impl GoNhanhEngine {
     }
 }
 
-#[interface(name = "org.freedesktop.IBus.Engine")]
+/// Gõ Nhanh IBus Engine
+///
+/// Implements the org.freedesktop.IBus.Engine D-Bus interface
+#[interface(name = "org.freedesktop.IBus.GoNhanh", spawn = false)]
 impl GoNhanhEngine {
     /// Process key event (main method)
     ///
     /// Returns true if the key was handled, false to pass through
     async fn process_key_event(
         &self,
-        #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
+        #[zbus(signal_emitter)] emitter: SignalEmitter<'_>,
         keyval: u32,
         keycode: u32,
         state: u32,
@@ -115,7 +108,10 @@ impl GoNhanhEngine {
         // Process through gonhanh_core
         match ffi::process_key(macos_keycode, caps, bypass_ime, shift) {
             ffi::ImeAction::Send { backspace, text } => {
-                self.send_text(&ctxt, backspace, &text).await.ok();
+                // Log errors but continue - don't break input flow on D-Bus errors
+                if let Err(e) = self.send_text(&emitter, backspace, &text).await {
+                    log::error!("Failed to send text via D-Bus: {}", e);
+                }
                 Ok(true) // Consume the event
             }
             ffi::ImeAction::None => Ok(false), // Pass through
@@ -199,33 +195,56 @@ impl GoNhanhEngine {
 
     // ========== Signals (methods to emit signals to IBus daemon) ==========
 
-    /// Commit text signal
+    /// CommitText signal - sends committed text to the application
+    ///
+    /// This signal is emitted when the engine has finalized text that should be
+    /// inserted into the application (e.g., after completing Vietnamese composition).
     #[zbus(signal)]
-    async fn commit_text(ctxt: &SignalEmitter<'_>, text: &str) -> zbus::Result<()>;
+    async fn commit_text(emitter: &SignalEmitter<'_>, text: &str) -> zbus::Result<()>;
 
-    /// Forward key event signal
+    /// ForwardKeyEvent signal - forwards a key event to the application
+    ///
+    /// This signal is emitted when the engine wants to forward a key event
+    /// (typically for backspace) to the application as if the user typed it.
+    ///
+    /// # Arguments
+    /// * `keyval` - X11 keysym value
+    /// * `keycode` - Hardware keycode
+    /// * `state` - Modifier state mask
     #[zbus(signal)]
     async fn forward_key_event(
-        ctxt: &SignalEmitter<'_>,
+        emitter: &SignalEmitter<'_>,
         keyval: u32,
         keycode: u32,
         state: u32,
     ) -> zbus::Result<()>;
 
-    /// Update preedit text signal (not used for now)
+    /// UpdatePreeditText signal - updates pre-edit buffer display
+    ///
+    /// This signal is emitted to update the composition text being displayed
+    /// before it is committed. Not currently used in this implementation.
+    ///
+    /// # Arguments
+    /// * `text` - The preedit text to display
+    /// * `cursor_pos` - Cursor position within the preedit text
+    /// * `visible` - Whether the preedit text should be visible
     #[zbus(signal)]
     async fn update_preedit_text(
-        ctxt: &SignalEmitter<'_>,
+        emmiter: &SignalEmitter<'_>,
         text: &str,
         cursor_pos: u32,
         visible: bool,
     ) -> zbus::Result<()>;
 
-    /// Hide preedit text signal
+    /// HidePreeditText signal - hides the pre-edit buffer display
+    ///
+    /// This signal is emitted to hide the composition text display.
     #[zbus(signal)]
-    async fn hide_preedit_text(ctxt: &SignalEmitter<'_>) -> zbus::Result<()>;
+    async fn hide_preedit_text(emitter: &SignalEmitter<'_>) -> zbus::Result<()>;
 
-    /// Show preedit text signal
+    /// ShowPreeditText signal - shows the pre-edit buffer display
+    ///
+    /// This signal is emitted to show the composition text display.
     #[zbus(signal)]
-    async fn show_preedit_text(ctxt: &SignalEmitter<'_>) -> zbus::Result<()>;
+    async fn show_preedit_text(emitter: &SignalEmitter<'_>) -> zbus::Result<()>;
 }
