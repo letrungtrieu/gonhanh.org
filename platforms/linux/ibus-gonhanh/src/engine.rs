@@ -45,7 +45,7 @@ impl GoNhanhEngine {
 /// Gõ Nhanh IBus Engine
 ///
 /// Implements the org.freedesktop.IBus.Engine D-Bus interface
-#[interface(name = "org.freedesktop.IBus.GoNhanh", spawn = false)]
+#[interface(name = "org.freedesktop.IBus.Engine")]
 impl GoNhanhEngine {
     /// Process key event (main method)
     ///
@@ -230,7 +230,7 @@ impl GoNhanhEngine {
     /// * `visible` - Whether the preedit text should be visible
     #[zbus(signal)]
     async fn update_preedit_text(
-        emmiter: &SignalEmitter<'_>,
+        emitter: &SignalEmitter<'_>,
         text: &str,
         cursor_pos: u32,
         visible: bool,
