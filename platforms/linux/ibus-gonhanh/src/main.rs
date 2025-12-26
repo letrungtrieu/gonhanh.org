@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // Create D-Bus connection
     let _connection = connection::Builder::session()?
-        .name("org.freedesktop.GoNhanh")?
+        .name("org.freedesktop.IBus.GoNhanh")?
         .serve_at("/org/freedesktop/IBus/Engine/GoNhanh", gonhanh_engine)?
         .max_queued(64)  // Configure queue capacity for IME workload
         .build()
